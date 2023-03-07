@@ -107,6 +107,12 @@ fn open(filename: &str) -> MyResult<Box <dyn BufRead>> {
 pub fn run(config: Config) -> MyResult<()> {
 
     
+    let mut total_num_lines = 0;
+    let mut total_num_words = 0;
+    let mut total_num_bytes = 0;
+    let mut total_num_chars = 0;
+    let mut new_total_str = String::new();
+
     for filename in &config.files {
 
         match open(filename)  {
@@ -116,6 +122,12 @@ pub fn run(config: Config) -> MyResult<()> {
 
                 let result = count(reader)?;
                 let mut new_str = String::new();
+                
+                total_num_lines += result.num_lines;
+                total_num_words += result.num_words;
+                total_num_bytes += result.num_bytes;
+                total_num_chars += result.num_chars;
+
                 zip([config.lines, config.words, config.bytes, config.chars],
                     [result.num_lines, result.num_words, result.num_bytes, result.num_chars]).for_each(
 
@@ -126,9 +138,31 @@ pub fn run(config: Config) -> MyResult<()> {
                         }
                     }
                 );
-                println!("{} {}", new_str, filename);
+
+                
+                if filename!="-" { 
+                    println!("{} {}", new_str, filename);
+                }
+                else {
+                    println!("{}", new_str);
+                }
+                    
+               
             }
         }
+    }
+    zip([config.lines, config.words, config.bytes, config.chars],
+        [total_num_lines, total_num_words, total_num_bytes, total_num_chars]).for_each(
+
+        |v| {
+
+            if v.0 {
+                new_total_str.push_str(format!("{:>8}",v.1 ).as_str());
+            }
+        }
+    );
+    if (&config.files.len() > &1) {
+        println!("{} total", new_total_str);
     }
     Ok(())
 }
