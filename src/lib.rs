@@ -2,7 +2,7 @@ use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
+use std::iter::zip;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -106,6 +106,7 @@ fn open(filename: &str) -> MyResult<Box <dyn BufRead>> {
 }
 pub fn run(config: Config) -> MyResult<()> {
 
+    
     for filename in &config.files {
 
         match open(filename)  {
@@ -114,7 +115,18 @@ pub fn run(config: Config) -> MyResult<()> {
             Ok(reader) => {
 
                 let result = count(reader)?;
-                println!("{:>8}{:>8}{:>8} {}", result.num_lines, result.num_words, result.num_bytes, filename);
+                let mut new_str = String::new();
+                zip([config.lines, config.words, config.bytes, config.chars],
+                    [result.num_lines, result.num_words, result.num_bytes, result.num_chars]).for_each(
+
+                    |v| {
+
+                        if v.0 {
+                            new_str.push_str(format!("{:>8}",v.1 ).as_str());
+                        }
+                    }
+                );
+                println!("{} {}", new_str, filename);
             }
         }
     }
